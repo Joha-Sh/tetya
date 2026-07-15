@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>💖 Love Galaxy & Heart 3D 💖</title>
+<!-- Подключение красивых шрифтов -->
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+* {
+  box-sizing: border-box;
+}
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  background: #000;
+  overflow: hidden;
+  font-family: 'Montserrat', Arial, sans-serif;
+  user-select: none;
+  -webkit-user-select: none;
+}
+/* Интерфейс приветствия */
+#welcome-screen {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at center, #180512 0%, #000000 100%);
+  z-index: 100;
+  transition: opacity 1s ease-in-out;
+  text-align: center;
+  padding: 20px;
+}
+#welcome-screen h1 {
+  font-size: clamp(28px, 6vw, 46px);
+  color: #fff;
+  margin-bottom: 10px;
+  background: linear-gradient(45deg, #ff4081, #ff80ab, #ff2c55);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 30px rgba(255, 44, 85, 0.2);
+}
+#welcome-screen p {
+  color: #ffa4cf;
+  font-size: clamp(14px, 3vw, 18px);
+  max-width: 400px;
+  margin: 0 auto 30px auto;
+  line-height: 1.5;
+  opacity: 0.8;
+}
+#start-btn {
+  padding: clamp(14px, 2vw, 18px) clamp(26px, 6vw, 45px);
+  font-size: clamp(18px, 4vw, 24px);
+  font-weight: 700;
+  border: none;
+  border-radius: 50px;
+  background: linear-gradient(135deg, #ff2b55 0%, #d1123f 100%);
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 0 30px rgba(255, 43, 85, 0.6);
+  transition: all 0.3s ease;
+  outline: none;
+}
+#start-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 40px rgba(255, 43, 85, 0.8);
+}
+#start-btn:active {
+  transform: scale(0.98);
+}
+
+/* Холсты для анимаций */
+canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: none;
+}
+
+/* Верхний заголовок во время галактики */
+#overlay-text {
+  position: absolute;
+  top: 30px;
+  left: 0;
+  width: 100%;
+  text-align: center;
+  pointer-events: none;
+  z-index: 50;
+  opacity: 0;
+  transition: opacity 2s ease;
+}
+#overlay-text h2 {
+  margin: 0;
+  color: #ff66dd;
+  font-size: clamp(20px, 4vw, 28px);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  text-shadow: 0 0 15px rgba(255, 102, 221, 0.8);
+}
+#overlay-text p {
+  margin: 5px 0 0 0;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: clamp(10px, 2vw, 13px);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* Кнопка сброса (начать заново) */
+#restart-btn {
+  position: absolute;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 12px 30px;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 30px;
+  cursor: pointer;
+  z-index: 60;
+  backdrop-filter: blur(5px);
+  transition: all 0.3s ease;
+  opacity: 0;
+  pointer-events: none;
+}
+#restart-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+}
+</style>
+</head>
+<body>
+
+<!-- Экран приветствия -->
+<div id="welcome-screen">
+  <div style="font-size: 50px; margin-bottom: 15px; filter: drop-shadow(0 0 15px rgba(255,43,85,0.6));">💖</div>
+  <h1>Для любимой Тёти 💖</h1>
+  <p>Приготовься увидеть чудо. Надень наушники и начни это романтическое путешествие.</p>
+  <p>(Желательно включи версию для ПК если смотришь с телефона)</p>
+  <button id="start-btn">❤️ Start ❤️</button>
+</div>
+
+<!-- Заголовок поверх 3D Галактики -->
+<div id="overlay-text">
+  <h2>💖 С днем рождения 💖</h2>
+  <p>Вращай или масштабируй, чтобы рассмотреть воспоминания</p>
+</div>
+
+<!-- Кнопка начать заново -->
+<button id="restart-btn" onclick="location.reload()">Начать заново ❤️</button>
+
+<!-- Холст для сердца из частиц (File 1) -->
+<canvas id="heart-canvas"></canvas>
+
+<!-- Холст для салюта (Фейерверка) -->
+<canvas id="fireworks-canvas"></canvas>
+
+<!-- Холст для 3D Галактики (Three.js) -->
+<div id="webgl-container" style="position: absolute; inset: 0; z-index: 10;"></div>
+
+<!-- Аудиофайлы -->
+<audio id="heart-audio" src="music.mp3"></audio>
+<audio id="galaxy-audio" loop src="song.mp3"></audio>
+
+<!-- Подключение Three.js -->
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+
+<script>
+// Список фотографий
+const PHOTOS = [
+  "1.jpg", "2.jpg", "3.jpg", "4.jpg", "5.jpg", "6.jpg", "7.jpg", "8.jpg", "9.jpg",
+  "10.jpg", "11.jpg", "12.jpg", "13.jpg", "14.jpg", "15.jpg", "16.jpg", "17.jpg", "18.jpg", "19.jpg",
+  "20.jpg", "21.jpg", "22.jpg", "23.jpg", "24.jpg", "25.jpg", "26.jpg", "27.jpg", "28.jpg", "29.jpg", "30.jpg"
+];
+
+// Иконки смайликов
+const STICKER_ICONS = ["💖","💕","💘","💝","💗","💓","💞","💜","🌹","🌸","🌺","🌷","🦋","✨","🌟","⭐","🎀","🍓","🍒","🥰","😍","😘","🐻","🐰","🌈"];
+
+// Состояния игры
+let heartAudio = document.getElementById('heart-audio');
+let galaxyAudio = document.getElementById('galaxy-audio');
+
+document.getElementById('start-btn').onclick = function() {
+  document.getElementById('welcome-screen').style.opacity = '0';
+  setTimeout(() => {
+    document.getElementById('welcome-screen').style.display = 'none';
+    startHeartDrawing();
+  }, 1000);
+};
+
+/* =========================================================
+   ЧАСТЬ 1: Рисование сердца из первого файла
+   ========================================================= */
+function startHeartDrawing() {
+  const c = document.getElementById('heart-canvas');
+  c.style.display = 'block';
+  const x = c.getContext('2d');
+  
+  // Воспроизведение музыки сердца
+  heartAudio.play().catch(() => {});
+
+  let SCALE = 18;
+  function R() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    c.width = window.innerWidth * dpr;
+    c.height = window.innerHeight * dpr;
+    c.style.width = window.innerWidth + 'px';
+    c.style.height = window.innerHeight + 'px';
+    x.setTransform(dpr, 0, 0, dpr, 0, 0);
+    SCALE = Math.min(window.innerWidth, window.innerHeight) / 40;
+  }
+  R();
+  window.addEventListener('resize', R);
+
+  let s = 0;
+  function H(a) {
+    return [
+      16 * Math.sin(a) ** 3,
+      13 * Math.cos(a) - 5 * Math.cos(2 * a) - 2 * Math.cos(3 * a) - Math.cos(4 * a)
+    ];
+  }
+
+  let heartAnimId;
+
+  (function f() {
+    x.fillStyle = "rgba(0,0,0,.08)";
+    x.fillRect(0, 0, window.innerWidth, window.innerHeight);
+    x.fillStyle = "#ff2b55";
+    x.font = "13px Arial";
+
+    const progress = Math.min(1, s / 360);
+    const cx = window.innerWidth / 2 - SCALE * 2.5;
+    const cy = window.innerHeight / 2;
+
+    // Контур сердца
+    for (let a = 0; a < 6.28 * progress; a += 0.045) {
+      let p = H(a);
+      x.fillText("Love You", cx + p[0] * SCALE, cy - p[1] * SCALE);
+    }
+
+    if (s > 360) {
+      let count = Math.min(220, Math.floor((s - 360) / 3));
+      x.font = "9px Arial";
+      for (let i = 0; i < count; i++) {
+        let a = Math.random() * 6.283, r = Math.sqrt(Math.random());
+        let hp = H(a);
+        let px = hp[0] * SCALE * r, py = -hp[1] * SCALE * r;
+        x.save();
+        x.globalAlpha = Math.min(1, (s - 360) / 180);
+        x.fillText("Love You", cx + px, cy + py);
+        x.restore();
+      }
+      x.font = "13px Arial";
+      for (let a = 0; a < 6.28; a += 0.045) {
+        let p = H(a);
+        x.fillText("Love You", cx + p[0] * SCALE, cy - p[1] * SCALE);
+      }
+    }
+
+    s++;
+    if (s < 900) {
+      heartAnimId = requestAnimationFrame(f);
+    } else {
+      // Плавное затухание сердца перед салютом
+      let fadeOpacity = 1;
+      function fadeOut() {
+        x.fillStyle = "rgba(0,0,0,0.12)";
+        x.fillRect(0, 0, window.innerWidth, window.innerHeight);
+        fadeOpacity -= 0.05;
+        if (fadeOpacity > 0) {
+          requestAnimationFrame(fadeOut);
+        } else {
+          window.removeEventListener('resize', R);
+          c.style.display = 'none';
+          cancelAnimationFrame(heartAnimId);
+          startFireworks(); // ПЕРЕХОД К САЛЮТУ
+        }
+      }
+      fadeOut();
+    }
+  })();
+}
+
+/* =========================================================
+   ЧАСТЬ 2: Красочный салют (Фейерверк-переход)
+   ========================================================= */
+function startFireworks() {
+  const c = document.getElementById('fireworks-canvas');
+  c.style.display = 'block';
+  const ctx = c.getContext('2d');
+
+  function resize() {
+    c.width = window.innerWidth;
+    c.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  const particles = [];
+  const rockets = [];
+  const colors = ["#ff2ea6", "#ff5ccf", "#ff2b55", "#e0a6ff", "#ffe66d", "#ff4fc3", "#00f0ff", "#ff7300"];
+
+  function spawnRocket() {
+    const sx = Math.random() * window.innerWidth;
+    const sy = window.innerHeight;
+    const tx = Math.random() * (window.innerWidth * 0.8) + window.innerWidth * 0.1;
+    const ty = Math.random() * (window.innerHeight * 0.4) + window.innerHeight * 0.15;
+    const color = colors[Math.floor(Math.random() * colors.length)];
+    const angle = Math.atan2(ty - sy, tx - sx);
+    const speed = Math.random() * 4 + 11;
+    
+    rockets.push({
+      x: sx,
+      y: sy,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      ty: ty,
+      color: color
+    });
+  }
+
+  function createExplosion(x, y, color) {
+    const count = 80;
+    for (let i = 0; i < count; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = Math.random() * 6 + 1.5;
+      particles.push({
+        x: x,
+        y: y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        alpha: 1,
+        decay: Math.random() * 0.02 + 0.015,
+        color: color,
+        size: Math.random() * 2 + 1
+      });
+    }
+  }
+
+  let frame = 0;
+  let fireworksAnimId;
+  let finishing = false;
+
+  (function loop() {
+    ctx.fillStyle = "rgba(0, 0, 0, 0.18)";
+    ctx.fillRect(0, 0, c.width, c.height);
+
+    // Вывод нежного послания во время салюта
+    ctx.save();
+    ctx.textAlign = "center";
+    ctx.font = "italic bold clamp(22px, 5vw, 36px) 'Caveat', cursive";
+    ctx.fillStyle = "#ff66dd";
+    ctx.shadowBlur = 15;
+    ctx.shadowColor = "#ff2ea6";
+    ctx.fillText("Лови моменты счастья... ✨", c.width / 2, c.height / 2 - 100);
+    ctx.restore();
+
+    // Запуск ракет с интервалом
+    if (frame % 15 === 0 && frame < 180) {
+      spawnRocket();
+    }
+
+    // Обновление ракет
+    for (let i = rockets.length - 1; i >= 0; i--) {
+      const r = rockets[i];
+      r.x += r.vx;
+      r.y += r.vy;
+
+      // Искры от летящей ракеты
+      ctx.fillStyle = "rgba(255,255,255,0.3)";
+      ctx.fillRect(r.x, r.y, 2, 2);
+
+      if (r.vy < 0 && r.y <= r.ty) {
+        createExplosion(r.x, r.y, r.color);
+        rockets.splice(i, 1);
+      } else {
+        ctx.beginPath();
+        ctx.fillStyle = r.color;
+        ctx.arc(r.x, r.y, 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    // Обновление осколков салюта
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i];
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.06; // сила гравитации
+      p.vx *= 0.98;
+      p.vy *= 0.98;
+      p.alpha -= p.decay;
+
+      if (p.alpha <= 0) {
+        particles.splice(i, 1);
+      } else {
+        ctx.save();
+        ctx.globalAlpha = p.alpha;
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    frame++;
+
+    if (frame > 240 && !finishing) {
+      finishing = true;
+      let fadeVal = 0;
+      function finalFade() {
+        ctx.fillStyle = `rgba(0, 0, 0, ${fadeVal})`;
+        ctx.fillRect(0, 0, c.width, c.height);
+        fadeVal += 0.05;
+        if (fadeVal < 1) {
+          requestAnimationFrame(finalFade);
+        } else {
+          window.removeEventListener('resize', resize);
+          c.style.display = 'none';
+          cancelAnimationFrame(fireworksAnimId);
+          // Плавное затухание первой музыки
+          let volume = heartAudio.volume;
+          const fadeMusic = setInterval(() => {
+            volume -= 0.03;
+            if(volume<=0){
+              volume=0;
+              heartAudio.pause();
+              heartAudio.currentTime=0;
+              clearInterval(fadeMusic);
+            }
+            heartAudio.volume=volume;
+          },100);
+          setTimeout(() => {
+            start3DGalaxy();
+          },3500); // ПЕРЕХОД К 3D ГАЛАКТИКЕ
+        }
+      }
+      finalFade();
+    } else if (!finishing) {
+      fireworksAnimId = requestAnimationFrame(loop);
+    }
+  })();
+}
+
+/* =========================================================
+   ЧАСТЬ 3: 3D Галактика Любви (Three.js)
+   ========================================================= */
+function start3DGalaxy() {
+  // Запуск музыки галактики
+  galaxyAudio.currentTime = 0;
+  galaxyAudio.play().catch(() => {});
+
+  // Появление интерфейса галактики
+  document.getElementById('overlay-text').style.opacity = '1';
+  document.getElementById('restart-btn').style.opacity = '1';
+  document.getElementById('restart-btn').style.pointerEvents = 'auto';
+
+  // Инициализация Three.js сцены
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 5000);
+  
+  // Начальная точка камеры для плавного влета
+  let curCameraZ = window.innerWidth < 700 ? 2500 : 1900;
+  camera.position.z = curCameraZ;
+
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  document.getElementById('webgl-container').appendChild(renderer.domElement);
+
+  const galaxy = new THREE.Group();
+  scene.add(galaxy);
+
+  // 1. Создание звездного неба
+  const starGeo = new THREE.BufferGeometry();
+  const pos = [];
+  for (let i = 0; i < 65000; i++) {
+    let r = Math.random() * 2000;
+    let a = Math.random() * Math.PI * 2;
+    pos.push(Math.cos(a) * r, (Math.random() - 0.5) * 900, Math.sin(a) * r);
+  }
+  starGeo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  const stars = new THREE.Points(starGeo, new THREE.PointsMaterial({
+    color: 0xffb3f5,
+    size: 1.8,
+    transparent: true,
+    opacity: 0.9
+  }));
+  galaxy.add(stars);
+
+  // 2. Создание 3D сердца в центре
+  const heartGroup = new THREE.Group();
+  function heartFormula(t) {
+    return [
+      16 * Math.pow(Math.sin(t), 3),
+      13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t)
+    ];
+  }
+
+  for (let t = 0; t < Math.PI * 2; t += 0.02) {
+    const coords = heartFormula(t);
+    const canvasEl = document.createElement('canvas');
+    canvasEl.width = canvasEl.height = 64;
+    const ctx = canvasEl.getContext('2d');
+    ctx.font = '52px Arial';
+    ctx.fillText('💖', 2, 52);
+
+    const spMat = new THREE.SpriteMaterial({
+      map: new THREE.CanvasTexture(canvasEl),
+      transparent: true
+    });
+    const sprite = new THREE.Sprite(spMat);
+    sprite.position.set(coords[0] * 8, coords[1] * 8, (Math.random() - 0.5) * 60);
+    sprite.scale.set(22, 22, 22);
+    heartGroup.add(sprite);
+  }
+  galaxy.add(heartGroup);
+
+  // 3. Создание светящейся надписи "слово" в сердце
+  const txtCanvas = document.createElement('canvas');
+  txtCanvas.width = 1024;
+  txtCanvas.height = 512;
+  const txtCtx = txtCanvas.getContext('2d');
+  txtCtx.fillStyle = 'white';
+  txtCtx.textAlign = 'center';
+  txtCtx.font = 'bold 220px Montserrat, Arial';
+  txtCtx.shadowColor = '#ff66dd';
+  txtCtx.shadowBlur = 40;
+  txtCtx.fillText('🎂', 512, 310);
+
+  const txtSprite = new THREE.Sprite(new THREE.SpriteMaterial({
+    map: new THREE.CanvasTexture(txtCanvas),
+    transparent: true
+  }));
+  txtSprite.scale.set(300, 150, 1);
+  txtSprite.position.set(0, 0, 0);
+  heartGroup.add(txtSprite);
+
+  // Резервный генератор красивых карточек-полароидов
+  function createFallbackCard(index) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 320;
+    const ctx = canvas.getContext('2d');
+
+    // Фон рамки полароида
+    ctx.fillStyle = '#fffdf9';
+    ctx.fillRect(0, 0, 256, 320);
+
+    // Градиент внутри рамки
+    const grad = ctx.createLinearGradient(20, 20, 236, 240);
+    grad.addColorStop(0, `hsl(${(index * 35) % 360}, 95%, 75%)`);
+    grad.addColorStop(1, `hsl(${(index * 35 + 145) % 360}, 90%, 85%)`);
+    ctx.fillStyle = grad;
+    ctx.fillRect(20, 20, 216, 220);
+
+    // Рисование стикера
+    const em = STICKER_ICONS[index % STICKER_ICONS.length];
+    ctx.font = '84px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(em, 128, 130);
+
+    // Надписи под рамкой
+    const tags = ["Love Story", "Only You", "Sweet moments", "With Love", "Smile! 😊", "Together", "Soulmate", "Angel", "My Heart", "Amour", "Be mine"];
+    const text = tags[index % tags.length];
+    ctx.fillStyle = '#4b5563';
+    ctx.font = 'bold 24px "Caveat", cursive';
+    ctx.fillText(text, 128, 282);
+
+    return new THREE.CanvasTexture(canvas);
+  }
+
+  // 4. Загрузка фотографий и распределение по орбитам
+  const loader = new THREE.TextureLoader();
+  const photos = [];
+
+  PHOTOS.forEach((fileName, idx) => {
+    loader.load(
+      fileName,
+      function(tex) {
+        buildPhotoMesh(tex, idx);
+      },
+      undefined,
+      function() {
+        // Ошибка загрузки (если файлов локально нет) -> создаем красивую замену
+        const fallbackTex = createFallbackCard(idx);
+        buildPhotoMesh(fallbackTex, idx);
+      }
+    );
+  });
+
+  function buildPhotoMesh(tex, idx) {
+    const mesh = new THREE.Mesh(
+      new THREE.PlaneGeometry(80, 100),
+      new THREE.MeshBasicMaterial({ map: tex, side: THREE.DoubleSide })
+    );
+    const perRing = 20;
+    const ring = Math.floor(idx / perRing);
+    const index = idx % perRing;
+    const count = Math.min(perRing, PHOTOS.length - ring * perRing);
+    const baseRadius = window.innerWidth < 700 ? 700 : 500;
+    const gap = window.innerWidth < 700 ? 260 : 220;
+    const radius = baseRadius + ring * gap;
+    const ang = (index / count) * Math.PI * 2;
+
+    mesh.userData = { radius, ring, index, count };
+    mesh.position.set(Math.cos(ang) * radius, (ring - 2) * 120, Math.sin(ang) * radius);
+    galaxy.add(mesh);
+    photos.push(mesh);
+  }
+
+  // 5. Разброс парящих иконок/стикеров в пространстве
+  for (let i = 0; i < 220; i++) {
+    const icon = STICKER_ICONS[Math.floor(Math.random() * STICKER_ICONS.length)];
+    const canvasEl = document.createElement('canvas');
+    canvasEl.width = canvasEl.height = 64;
+    const ctx = canvasEl.getContext('2d');
+    ctx.font = '48px Arial';
+    ctx.fillText(icon, 5, 50);
+
+    const s = new THREE.Sprite(new THREE.SpriteMaterial({
+      map: new THREE.CanvasTexture(canvasEl),
+      transparent: true
+    }));
+    const r = 450 + Math.random() * 700;
+    const a = Math.random() * Math.PI * 2;
+    s.position.set(Math.cos(a) * r, (Math.random() - 0.5) * 500, Math.sin(a) * r);
+    s.scale.set(18, 18, 18);
+    galaxy.add(s);
+  }
+
+  // Подсветка центра
+  const light = new THREE.PointLight(0xff66dd, 10, 1500);
+  scene.add(light);
+
+  // 6. Управление вращением (Мышь и Touch)
+  let isDown = false;
+  let lastX = 0, lastY = 0;
+  let velX = 0, velY = 0;
+  let lastDistance = 0;
+  let galaxyScale = 1;
+
+  window.addEventListener('mousedown', (e) => {
+    isDown = true;
+    lastX = e.clientX;
+    lastY = e.clientY;
+  });
+
+  window.addEventListener('mouseup', () => {
+    isDown = false;
+  });
+
+  window.addEventListener('mousemove', (e) => {
+    if (!isDown) return;
+    galaxy.rotation.y += (e.clientX - lastX) * 0.005;
+    galaxy.rotation.x += (e.clientY - lastY) * 0.005;
+    velY = (e.clientX - lastX) * 0.00015;
+    velX = (e.clientY - lastY) * 0.00015;
+    lastX = e.clientX;
+    lastY = e.clientY;
+  });
+
+  window.addEventListener('touchstart', (e) => {
+    if (e.touches.length === 1) {
+      lastX = e.touches[0].clientX;
+      lastY = e.touches[0].clientY;
+    } else if (e.touches.length === 2) {
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      lastDistance = Math.sqrt(dx * dx + dy * dy);
+    }
+  }, { passive: true });
+
+  window.addEventListener('touchmove', (e) => {
+    if (e.touches.length === 1) {
+      galaxy.rotation.y += (e.touches[0].clientX - lastX) * 0.005;
+      galaxy.rotation.x += (e.touches[0].clientY - lastY) * 0.005;
+      velY = (e.touches[0].clientX - lastX) * 0.00015;
+      velX = (e.touches[0].clientY - lastY) * 0.00015;
+      lastX = e.touches[0].clientX;
+      lastY = e.touches[0].clientY;
+    } else if (e.touches.length === 2 && lastDistance > 0) {
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      camera.position.z -= (distance - lastDistance) * 3;
+      camera.position.z = Math.max(300, Math.min(4000, camera.position.z));
+      lastDistance = distance;
+    }
+  }, { passive: true });
+
+  window.addEventListener('touchend', () => {
+    lastDistance = 0;
+  });
+
+  // Масштабирование
+  window.addEventListener('wheel', (e) => {
+    galaxyScale += (e.deltaY > 0 ? -0.05 : 0.05);
+    galaxyScale = Math.max(0.4, Math.min(2.5, galaxyScale));
+    galaxy.scale.setScalar(galaxyScale);
+  }, { passive: true });
+
+  // Ресайз окна
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+
+  // 7. Основной цикл рендеринга и анимаций
+  const targetCameraZ = window.innerWidth < 700 ? 1200 : 700;
+
+  function animate() {
+    requestAnimationFrame(animate);
+
+    // Плавный влет камеры вперед на старте
+    if (curCameraZ > targetCameraZ) {
+      curCameraZ -= 12;
+      camera.position.z = curCameraZ;
+    }
+
+    stars.rotation.y += 0.00025;
+    stars.rotation.x += 0.00008;
+    stars.material.opacity = 0.82 + Math.sin(Date.now() * 0.0015) * 0.18;
+
+    heartGroup.rotation.y += 0.0004;
+    heartGroup.scale.setScalar(1 + Math.sin(Date.now() * 0.0018) * 0.05);
+    
+    if (txtSprite.material) {
+      txtSprite.material.opacity = 0.75 + Math.sin(Date.now() * 0.003) * 0.25;
+    }
+
+    // Вращение и пошатывание фотографий на орбитах
+    photos.forEach((p, i) => {
+      const d = p.userData;
+      if (!d) return;
+      const a = Date.now() * 0.00008 + (d.index / d.count) * Math.PI * 2;
+      p.position.x = Math.cos(a) * d.radius;
+      p.position.z = Math.sin(a) * d.radius;
+      p.position.y = (d.ring - 2) * 120 + Math.sin(Date.now() * 0.001 + i) * 18;
+      p.rotation.z = Math.sin(Date.now() * 0.0008 + i) * 0.08;
+      p.lookAt(camera.position);
+    });
+
+    // Инерция вращения
+    galaxy.rotation.x += velX;
+    galaxy.rotation.y += velY;
+    velX *= 0.94;
+    velY *= 0.94;
+
+    renderer.render(scene, camera);
+  }
+  animate();
+}
+</script>
+</body>
+</html>
